@@ -15,21 +15,12 @@ $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 TESTS := $(wildcard test/*.txt)
-.ONESHELL:
-check: $(TARGET)
-	@for test in $(TESTS); do
-		exp_result="$${test%.txt}.expected";
-		./$(TARGET) < "$$test" > .result;
-		if ! diff -q "$$exp_result" .result > /dev/null; then
-			echo "Test $$test failed but I won't";
-			diff "$$exp_result" .result;
-			rm -f .result;
-			exit 1;
-		fi;
-	done
-	@rm -f .result
+check: $(TARGET) $(TESTS:.txt=.check)
+	@true
+test/%.check: test/%.txt test/%.expected
+	@./$(TARGET) < $< | diff $*.expected -
 
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: all clean
+.PHONY: all clean check $(TESTS:.txt=.check)
