@@ -1,26 +1,26 @@
 NAME := $(shell jq -r .name config.json)
 VERSION := $(shell jq -r .version config.json)
-
-SRC := src/wordcount.c
-BUILD_DIR := build
-TARGET := $(BUILD_DIR)/$(NAME)
+TARGET := build/$(NAME)
 
 all: $(TARGET)
 
-COMP_ARGS := -DNAME=\"$(NAME)\" -DVERSION=\"$(VERSION)\"
-$(TARGET): $(SRC) config.json | $(BUILD_DIR)
-	gcc $(COMP_ARGS) -o $(TARGET) $(SRC)
+$(TARGET): src/wordcount.c config.json | build
+	gcc -DNAME=\"$(NAME)\" -DVERSION=\"$(VERSION)\" -o $@ $<
 
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
-
-TESTS := $(wildcard test/*.txt)
-check: $(TARGET) $(TESTS:.txt=.check)
-	@true
-test/%.check: test/%.txt test/%.expected
-	@./$(TARGET) < $< | diff $*.expected -
+build:
+	mkdir -p $@
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf build
 
-.PHONY: all clean check $(TESTS:.txt=.check)
+check: $(patsubst test/%.txt,test/%.check,$(wildcard test/*.txt))
+
+test/%.check: test/%.txt test/%.expected $(TARGET)
+	@actual=$$(./$(TARGET) < $<); \
+	expected=$$(cat test/$*.expected); \
+	if [ "$$actual" != "$$expected" ]; then \
+		echo "$$actual" | diff test/$*.expected -; \
+		exit 1; \
+	fi
+
+.PHONY: all clean check
