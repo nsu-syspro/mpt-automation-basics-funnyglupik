@@ -1,0 +1,16 @@
+name: Continuous-integration
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build_test:
+    run-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Building
+      run: make
+
+    - name: Testing
+      run: make check
